@@ -11,29 +11,47 @@
     
     <style>
         :root {
-            /* Linear & Stripe Caliber Theme Tokens */
-            --bg-obsidian: #030303;
-            --bg-glass: rgba(10, 10, 12, 0.45);
-            --bg-glass-hover: rgba(18, 18, 24, 0.65);
-            --border-glow: rgba(255, 255, 255, 0.03);
-            --border-glow-active: rgba(0, 245, 255, 0.35);
-            
-            --accent-cyan: #00f5ff;
-            --accent-gold: #fbbf24;
-            --accent-green: #10b981;
-            --accent-red: #f43f5e;
-            
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --text-muted: #4b5563;
-            
-            --font-main: 'Plus Jakarta Sans', 'Inter', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-            
-            --glass-blur: blur(24px);
-            --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.5);
-            --transition-premium: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+  /* Linear & Stripe Caliber Theme Tokens */
+  --bg-obsidian: #030303;
+  --bg-glass: rgba(10, 10, 12, 0.35);
+  --bg-glass-hover: rgba(18, 18, 24, 0.5);
+  --bg-glass-highlight: rgba(255, 255, 255, 0.08);
+  
+  --border-glow: rgba(255, 255, 255, 0.03);
+  --border-glow-active: rgba(0, 245, 255, 0.35);
+  
+  --accent-cyan: #00f5ff;
+  --accent-gold: #fbbf24;
+  --accent-green: #10b981;
+  --accent-red: #f43f5e;
+  
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #4b5563;
+  
+  --font-main: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --glass-blur: blur(24px);
+  --shadow-premium: 0 8px 32px rgba(0, 0, 0, 0.37);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  --spring-mass: 1.2;
+  --spring-stiffness: 170;
+  --spring-damping: 26;
+  --transition-instant: 50ms;
+  --transition-spring: calc(1000ms / var(--spring-stiffness));
+
+  --font-size-base: 16px;
+  --font-size-sm: calc(var(--font-size-base) * 0.875);
+  --font-size-lg: calc(var(--font-size-base) * 1.25);
+  --font-size-xl: calc(var(--font-size-base) * 1.5);
+  --font-size-2xl: calc(var(--font-size-base) * 2);
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+}
 
         * {
             margin: 0;
@@ -44,13 +62,16 @@
         }
 
         body {
-            background-color: var(--bg-obsidian);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            min-height: 100vh;
-            overflow: hidden;
-            letter-spacing: -0.01em;
-        }
+  font-size: var(--font-size-base);
+  line-height: 1.7;
+  letter-spacing: var(--tracking-normal);
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  background-color: var(--bg-obsidian);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  overflow: hidden;
+}
 
         /* 1. Glowing Mesh Gradient Background & Grid Lines */
         #mesh-grid-container {
@@ -1027,6 +1048,143 @@
             70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
+
+/* NEW MASTER PROMPT STYLES */
+.nav-item:hover,
+.btn-action:hover,
+.card-stat:hover,
+.column-card:hover,
+.action-container-row > *:hover {
+  transition:
+    transform var(--transition-spring) cubic-bezier(0.17, 0.67, 0.83, 0.67),
+    background-color var(--transition-spring) cubic-bezier(0.17, 0.67, 0.83, 0.67),
+    border-color var(--transition-spring) cubic-bezier(0.17, 0.67, 0.83, 0.67),
+    box-shadow var(--transition-spring) cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  transform: translateX(6px) scale(1.02);
+}
+
+:is(.nav-item, .btn-action, .card-stat, .column-card):active {
+  transform: translateY(0) scale(0.98);
+  transition: transform var(--transition-instant) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-item:hover::after,
+.btn-action:hover::after,
+.card-stat:hover::after,
+.column-card:hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 245, 255, 0.15), transparent 70%);
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+.card-stat,
+.column-card,
+.btn-action,
+.feature-panel,
+.explainability-panel,
+.sidebar {
+  background: var(--bg-glass) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  border: 1px solid var(--border-glow) !important;
+  box-shadow: var(--shadow-inset), var(--shadow-premium) !important;
+  border-radius: 16px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.card-stat::before,
+.column-card::before,
+.btn-action::before,
+.feature-panel::before,
+.explainability-panel::before,
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%);
+  mask:
+    linear-gradient(90deg, transparent, black 20%, black 80%, transparent);
+  -webkit-mask:
+    linear-gradient(90deg, transparent, black 20%, black 80%, transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.card-stat:hover::before,
+.column-card:hover::before,
+.btn-action:hover::before,
+.feature-panel:hover::before,
+.explainability-panel:hover::before,
+.sidebar:hover::before {
+  opacity: 1;
+}
+
+.card-stat.accent-cyan::after,
+.card-stat.accent-gold::after,
+.column-card.accent-cyan::after,
+.column-card.accent-gold::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background:
+    linear-gradient(135deg,
+      transparent 0%,
+      var(--accent-cyan) 30%,
+      var(--accent-cyan) 70%,
+      transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.card-stat.accent-cyan:hover::after,
+.column-card.accent-cyan:hover::after { opacity: 0.15; }
+.card-stat.accent-gold:hover::after,
+.column-card.accent-gold:hover::after {
+  background: linear-gradient(135deg, transparent 0%, var(--accent-gold) 30%, var(--accent-gold) 70%, transparent 100%);
+  opacity: 0.15;
+}
+
+.page-title-section h1 {
+  font-size: calc(var(--font-size-base) * 1.5) !important;
+  font-weight: 800 !important;
+  letter-spacing: var(--tracking-tighter) !important;
+  background: linear-gradient(135deg, #ffffff 60%, #a3a3a3 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: 0 0 2px rgba(0,245,255,0.1) !important;
+}
+
+.stat-val,
+.gauge-card span,
+.lbl-capital,
+.lbl-winrate,
+.lbl-rr {
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: 'tnum' 1, 'lnum' 0 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.brand-name,
+.stat-val,
+.gauge-card span,
+.page-title-section h1 {
+  text-shadow:
+    0 0 4px rgba(0, 245, 255, 0.3),
+    0 0 8px rgba(0, 245, 255, 0.15) !important;
+}
+
+/* END NEW MASTER PROMPT STYLES */
+
     </style>
 </head>
 <body>
