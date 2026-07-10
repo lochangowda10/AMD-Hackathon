@@ -7,7 +7,7 @@
     
     <!-- Premium Google Fonts & Lucide Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     
     <style>
         :root {
@@ -1625,8 +1625,36 @@
 
     <!-- Scripting logic -->
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+        // Global visual error logger for local debugging
+        window.onerror = function(message, source, lineno, colno, error) {
+            const div = document.createElement('div');
+            div.style.position = 'fixed';
+            div.style.top = '10px';
+            div.style.left = '10px';
+            div.style.background = 'rgba(244, 63, 94, 0.95)';
+            div.style.color = '#fff';
+            div.style.padding = '16px 24px';
+            div.style.borderRadius = '8px';
+            div.style.zIndex = '99999';
+            div.style.fontFamily = 'monospace';
+            div.style.fontSize = '12px';
+            div.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+            div.style.border = '1px solid #f43f5e';
+            div.innerText = 'JS Error: ' + message + ' (Line ' + lineno + ')';
+            document.body.appendChild(div);
+            return false;
+        };
+
+        // Safe Lucide icon initialization wrapper
+        function initIcons() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.warn('Lucide CDN loading deferred or offline, retrying...');
+                setTimeout(initIcons, 100);
+            }
+        }
+        initIcons();
 
         // Cursor coordinates mesh glow logic
         const cursorGlow = document.getElementById('cursor-glow');
