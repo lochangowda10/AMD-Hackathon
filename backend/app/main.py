@@ -7,7 +7,6 @@ from app.core.logger import app_logger
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="AI Swing Trading Copilot Backend",
 )
 
 app.add_middleware(
@@ -20,20 +19,19 @@ app.add_middleware(
 
 
 @app.get("/")
-async def home():
+async def root():
     return {
-        "message": "Welcome to AI Swing Trading Copilot 🚀"
+        "message": "AI Swing Trading Copilot Backend Running 🚀"
     }
 
 
 @app.get("/health")
 async def health():
     return {
-        "status": "healthy",
-        "version": settings.APP_VERSION,
+        "status": "healthy"
     }
 
 
 @app.on_event("startup")
 async def startup():
-    app_logger.info("Backend started successfully.")
+    app_logger.info("Backend Started")

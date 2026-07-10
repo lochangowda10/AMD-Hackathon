@@ -5,15 +5,12 @@ logger.remove()
 
 logger.add(
     sys.stdout,
-    level="INFO",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+    level="INFO"
 )
 
 logger.add(
     "app/logs/backend.log",
-    rotation="10 MB",
-    retention="7 days",
-    level="INFO",
+    rotation="5 MB"
 )
 
 app_logger = logger
