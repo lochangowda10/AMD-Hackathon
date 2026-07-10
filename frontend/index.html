@@ -1630,7 +1630,11 @@
 
         // Cursor coordinates mesh glow logic
         const cursorGlow = document.getElementById('cursor-glow');
+        let mouseX = 0;
+        let mouseY = 0;
         window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
             cursorGlow.style.left = e.clientX + 'px';
             cursorGlow.style.top = e.clientY + 'px';
         });
