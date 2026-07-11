@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Trade {
+  id            String   @id @default(cuid())
+  symbol        String
+  direction     String   // BUY, SELL, WAIT
+  entryPrice    Float
+  exitPrice     Float?
+  quantity      Int
+  stopLoss      Float?
+  takeProfit    Float?
+  pnl           Float?
+  status        String   @default("OPEN") // OPEN, CLOSED, CANCELLED
+  confidence    Float?
+  riskLevel     String?  // LOW, MEDIUM, HIGH
+  agentDecision String?  // JSON of agent consensus
+  reasoning     String?  // LLM reasoning
+  entryDate     DateTime @default(now())
+  exitDate      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  journalEntries JournalEntry[]
+  analysisRecords AnalysisRecord[]
+}
+
+model JournalEntry {
+  id          String   @id @default(cuid())
+  tradeId     String
+  trade       Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  entryType   String   // PLAN, EXECUTION, REVIEW, EMOTION, LESSON
+  content     String
+  mood        String?  // CONFIDENT, ANXIOUS, FOMO, CALM, FEARFUL, GREEDY
+  followedPlan Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PortfolioHolding {
+  id            String   @id @default(cuid())
+  symbol        String
+  name          String
+  sector        String?
+  quantity      Int
+  avgPrice      Float
+  currentPrice  Float
+  investedAmount Float
+  currentValue  Float
+  pnl           Float
+  pnlPercent    Float
+  weight        Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AnalysisRecord {
+  id            String   @id @default(cuid())
+  tradeId       String?
+  trade         Trade?   @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  symbol        String
+  analysisType  String   // MULTI_AGENT, VISION, VOICE, SIMULATION
+  agentResults  String   // JSON - results from all agents
+  finalDecision String?
+  confidence    Float?
+  reasoning     String
+  inputData     String?  // JSON - original input that triggered analysis
+  createdAt     DateTime @default(now())
+}
+
+model MarketMemory {
+  id            String   @id @default(cuid())
+  symbol        String
+  tradeCount    Int      @default(0)
+  winRate       Float?
+  avgHoldingDays Float?
+  avgGain       Float?
+  avgLoss       Float?
+  commonMistake String?
+  suggestion    String?
+  patterns      String?  // JSON - detected patterns
+  lastTradedAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SimulationResult {
+  id            String   @id @default(cuid())
+  capital       Float
+  riskPercent   Float
+  tradeCount    Int
+  winRate       Float
+  rewardToRisk  Float
+  expectedProfit Float?
+  expectedLoss  Float?
+  bestCase      Float?
+  worstCase     Float?
+  expectedCAGR  Float?
+  maxDrawdown   Float?
+  riskOfRuin    Float?
+  probabilityDist String? // JSON
+  createdAt     DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String   // USER, ASSISTANT, SYSTEM
+  content   String
+  agentType String?  // ORCHESTRATOR, PSYCHOLOGY, PLANNER, etc.
+  audioUrl  String?
+  createdAt DateTime @default(now())
+}
+
+model WeeklyReport {
+  id            String   @id @default(cuid())
+  weekStart     DateTime
+  weekEnd       DateTime
+  totalTrades   Int
+  winRate       Float?
+  avgGain       Float?
+  avgLoss       Float?
+  emotionalMistakes Int @default(0)
+  strategyPerformance String? // JSON
+  recommendations  String
+  aiSummary     String
+  createdAt     DateTime @default(now())
+}

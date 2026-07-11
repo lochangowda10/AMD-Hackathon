@@ -1,0 +1,63 @@
+.background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+  background: #05070d;
+}
+
+.gradient {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.25;
+  animation: float 18s ease-in-out infinite;
+}
+
+.gradient1 {
+  background: #00e5ff;
+  top: -220px;
+  left: -180px;
+}
+
+.gradient2 {
+  background: #7b61ff;
+  right: -180px;
+  top: 20%;
+}
+
+.gradient3 {
+  background: #ff2d95;
+  bottom: -220px;
+  left: 35%;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+
+  background-size: 60px 60px;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  background: url("https://www.transparenttextures.com/patterns/asfalt-light.png");
+  opacity: 0.05;
+}
+
+@keyframes float {
+  0%,100% {
+    transform: translate(0,0);
+  }
+
+  50% {
+    transform: translate(80px,-60px);
+  }
+}
