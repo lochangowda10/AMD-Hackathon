@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { SkeletonText } from '@/components/ui/skeleton-text'
+import { Skeleton } from '@/components/ui/skeleton'
 import { FormField } from '@/components/ui/form-field'
 import { Label } from '@/components/ui/label'
 

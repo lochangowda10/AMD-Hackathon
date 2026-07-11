@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkeletonText } from '@/components/ui/skeleton-text'
+import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { FormField } from '@/components/ui/form-field'
