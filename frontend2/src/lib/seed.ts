@@ -3,11 +3,23 @@ import { db } from '@/lib/db';
 async function seed() {
   console.log('Seeding database...');
 
+  // Create Demo User
+  const user = await db.user.upsert({
+    where: { email: 'demo@example.com' },
+    update: {},
+    create: {
+      id: 'demo_user',
+      email: 'demo@example.com',
+      fullName: 'Demo User',
+      hashedPassword: '$2a$12$K89K.1J82u1YJ.7yE01WqOFc36c64U5l4Mux2vW84L3mZzO7c.Qz2' // bcrypt hash for 'password'
+    }
+  });
+
   // Portfolio Holdings
   const holdings = [
     { symbol: 'TCS', name: 'Tata Consultancy Services', sector: 'IT', quantity: 10, avgPrice: 3850, currentPrice: 4120, investedAmount: 38500, currentValue: 41200, pnl: 2700, pnlPercent: 7.0, weight: 22.3 },
     { symbol: 'RELIANCE', name: 'Reliance Industries', sector: 'Energy', quantity: 5, avgPrice: 2480, currentPrice: 2650, investedAmount: 12400, currentValue: 13250, pnl: 850, pnlPercent: 6.9, weight: 7.2 },
-    { symbol: 'INFY', name: 'Infosys Ltd', sector: 'IT', quantity: 15, avgPrice: 1520, currentPrice: 1680, investedAmount: 22800, currentValue: 25200, pnl: 2400, pnlPercent: 10.5, weight: 13.6 },
+    { symbol: 'FINY', name: 'Infosys Ltd', sector: 'IT', quantity: 15, avgPrice: 1520, currentPrice: 1680, investedAmount: 22800, currentValue: 25200, pnl: 2400, pnlPercent: 10.5, weight: 13.6 },
     { symbol: 'HDFCBANK', name: 'HDFC Bank', sector: 'Banking', quantity: 8, avgPrice: 1620, currentPrice: 1710, investedAmount: 12960, currentValue: 13680, pnl: 720, pnlPercent: 5.6, weight: 7.4 },
     { symbol: 'ITC', name: 'ITC Limited', sector: 'FMCG', quantity: 50, avgPrice: 445, currentPrice: 478, investedAmount: 22250, currentValue: 23900, pnl: 1650, pnlPercent: 7.4, weight: 12.9 },
     { symbol: 'BAJFINANCE', name: 'Bajaj Finance', sector: 'Finance', quantity: 4, avgPrice: 7200, currentPrice: 7450, investedAmount: 28800, currentValue: 29800, pnl: 1000, pnlPercent: 3.5, weight: 16.1 },
@@ -25,14 +37,14 @@ async function seed() {
 
   // Trades
   const trades = [
-    { id: 'trade_1', symbol: 'TCS', direction: 'BUY', entryPrice: 3850, quantity: 10, stopLoss: 3700, takeProfit: 4200, status: 'OPEN', confidence: 78, riskLevel: 'LOW', reasoning: 'Strong breakout above 3800 resistance with volume confirmation', entryDate: new Date('2025-01-10') },
-    { id: 'trade_2', symbol: 'INFY', direction: 'BUY', entryPrice: 1520, quantity: 15, stopLoss: 1450, takeProfit: 1700, status: 'OPEN', confidence: 82, riskLevel: 'LOW', reasoning: 'Cup and handle pattern completed, positive sector momentum', entryDate: new Date('2025-01-08') },
-    { id: 'trade_3', symbol: 'RELIANCE', direction: 'BUY', entryPrice: 2480, quantity: 5, stopLoss: 2380, takeProfit: 2700, status: 'OPEN', confidence: 71, riskLevel: 'MEDIUM', reasoning: 'Support bounce at 50 DMA, institutional buying observed', entryDate: new Date('2025-01-05') },
-    { id: 'trade_4', symbol: 'HDFCBANK', direction: 'BUY', entryPrice: 1620, quantity: 8, exitPrice: 1780, pnl: 1280, stopLoss: 1560, takeProfit: 1800, status: 'CLOSED', confidence: 85, riskLevel: 'LOW', reasoning: 'Golden cross on daily, strong volume', entryDate: new Date('2024-12-20'), exitDate: new Date('2025-01-15') },
-    { id: 'trade_5', symbol: 'TATAMOTORS', direction: 'BUY', entryPrice: 920, quantity: 20, exitPrice: 870, pnl: -1000, stopLoss: 890, takeProfit: 1000, status: 'CLOSED', confidence: 65, riskLevel: 'HIGH', reasoning: 'Momentum trade on EV sector news', entryDate: new Date('2024-12-15'), exitDate: new Date('2024-12-28') },
-    { id: 'trade_6', symbol: 'BAJFINANCE', direction: 'BUY', entryPrice: 7200, quantity: 4, stopLoss: 6900, takeProfit: 7800, status: 'OPEN', confidence: 74, riskLevel: 'MEDIUM', reasoning: 'Ascending triangle breakout, strong NBFC sector', entryDate: new Date('2025-01-12') },
-    { id: 'trade_7', symbol: 'ITC', direction: 'BUY', entryPrice: 445, quantity: 50, stopLoss: 425, takeProfit: 490, status: 'OPEN', confidence: 80, riskLevel: 'LOW', reasoning: 'Dividend yield play, FMCG recovery', entryDate: new Date('2025-01-03') },
-    { id: 'trade_8', symbol: 'MARUTI', direction: 'BUY', entryPrice: 10800, quantity: 3, stopLoss: 10300, takeProfit: 12000, status: 'OPEN', confidence: 76, riskLevel: 'MEDIUM', reasoning: 'Auto sector recovery, strong Q3 expected', entryDate: new Date('2025-01-14') },
+    { id: 'trade_1', symbol: 'TCS', direction: 'BUY', entryPrice: 3850, quantity: 10, stopLoss: 3700, takeProfit: 4200, status: 'OPEN', confidence: 78, riskLevel: 'LOW', reasoning: 'Strong breakout above 3800 resistance with volume confirmation', entryDate: new Date('2025-01-10'), authorId: 'demo_user' },
+    { id: 'trade_2', symbol: 'INFY', direction: 'BUY', entryPrice: 1520, quantity: 15, stopLoss: 1450, takeProfit: 1700, status: 'OPEN', confidence: 82, riskLevel: 'LOW', reasoning: 'Cup and handle pattern completed, positive sector momentum', entryDate: new Date('2025-01-08'), authorId: 'demo_user' },
+    { id: 'trade_3', symbol: 'RELIANCE', direction: 'BUY', entryPrice: 2480, quantity: 5, stopLoss: 2380, takeProfit: 2700, status: 'OPEN', confidence: 71, riskLevel: 'MEDIUM', reasoning: 'Support bounce at 50 DMA, institutional buying observed', entryDate: new Date('2025-01-05'), authorId: 'demo_user' },
+    { id: 'trade_4', symbol: 'HDFCBANK', direction: 'BUY', entryPrice: 1620, quantity: 8, exitPrice: 1780, pnl: 1280, stopLoss: 1560, takeProfit: 1800, status: 'CLOSED', confidence: 85, riskLevel: 'LOW', reasoning: 'Golden cross on daily, strong volume', entryDate: new Date('2024-12-20'), exitDate: new Date('2025-01-15'), authorId: 'demo_user' },
+    { id: 'trade_5', symbol: 'TATAMOTORS', direction: 'BUY', entryPrice: 920, quantity: 20, exitPrice: 870, pnl: -1000, stopLoss: 890, takeProfit: 1000, status: 'CLOSED', confidence: 65, riskLevel: 'HIGH', reasoning: 'Momentum trade on EV sector news', entryDate: new Date('2024-12-15'), exitDate: new Date('2024-12-28'), authorId: 'demo_user' },
+    { id: 'trade_6', symbol: 'BAJFINANCE', direction: 'BUY', entryPrice: 7200, quantity: 4, stopLoss: 6900, takeProfit: 7800, status: 'OPEN', confidence: 74, riskLevel: 'MEDIUM', reasoning: 'Ascending triangle breakout, strong NBFC sector', entryDate: new Date('2025-01-12'), authorId: 'demo_user' },
+    { id: 'trade_7', symbol: 'ITC', direction: 'BUY', entryPrice: 445, quantity: 50, stopLoss: 425, takeProfit: 490, status: 'OPEN', confidence: 80, riskLevel: 'LOW', reasoning: 'Dividend yield play, FMCG recovery', entryDate: new Date('2025-01-03'), authorId: 'demo_user' },
+    { id: 'trade_8', symbol: 'MARUTI', direction: 'BUY', entryPrice: 10800, quantity: 3, stopLoss: 10300, takeProfit: 12000, status: 'OPEN', confidence: 76, riskLevel: 'MEDIUM', reasoning: 'Auto sector recovery, strong Q3 expected', entryDate: new Date('2025-01-14'), authorId: 'demo_user' },
   ];
 
   for (const t of trades) {
@@ -60,10 +72,10 @@ async function seed() {
 
   // Journal Entries
   const journalEntries = [
-    { tradeId: 'trade_4', entryType: 'REVIEW', content: 'HDFC Bank trade worked perfectly. Entry at golden cross, exit near target. Followed the plan completely.', mood: 'CONFIDENT', followedPlan: true },
-    { tradeId: 'trade_5', entryType: 'REVIEW', content: 'Tata Motors loss was due to FOMO entry on news. Should have waited for confirmation candle. Did not follow the plan - entered immediately on headline.', mood: 'FOMO', followedPlan: false },
-    { tradeId: 'trade_4', entryType: 'LESSON', content: 'When golden cross forms with volume > 2x average, confidence is usually high. Trust the setup more.', mood: 'CALM', followedPlan: true },
-    { tradeId: 'trade_5', entryType: 'LESSON', content: 'Never enter on news alone. Always wait for price confirmation. News-driven entries have lower win rate.', mood: 'ANXIOUS', followedPlan: false },
+    { tradeId: 'trade_4', entryType: 'REVIEW', content: 'HDFC Bank trade worked perfectly. Entry at golden cross, exit near target. Followed the plan completely.', mood: 'CONFIDENT', followedPlan: true, authorId: 'demo_user' },
+    { tradeId: 'trade_5', entryType: 'REVIEW', content: 'Tata Motors loss was due to FOMO entry on news. Should have waited for confirmation candle. Did not follow the plan - entered immediately on headline.', mood: 'FOMO', followedPlan: false, authorId: 'demo_user' },
+    { tradeId: 'trade_4', entryType: 'LESSON', content: 'When golden cross forms with volume > 2x average, confidence is usually high. Trust the setup more.', mood: 'CALM', followedPlan: true, authorId: 'demo_user' },
+    { tradeId: 'trade_5', entryType: 'LESSON', content: 'Never enter on news alone. Always wait for price confirmation. News-driven entries have lower win rate.', mood: 'ANXIOUS', followedPlan: false, authorId: 'demo_user' },
   ];
 
   for (const j of journalEntries) {
