@@ -4,13 +4,32 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  "relative w-full rounded-lg border px-4 py-3 text-sm flex items-start gap-3",
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default: "border border-muted bg-card/50 text-foreground",
         destructive:
-          "text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+          "border border-destructive/50 bg-destructive/20 text-destructive",
+        outline:
+          "border border-muted bg-background text-foreground",
+        secondary:
+          "border border-secondary/50 bg-secondary/20 text-secondary-foreground",
+      },
+      variant: {
+        default: "border border-muted bg-card/50 text-foreground",
+        destructive:
+          "border border-destructive/50 bg-destructive/20 text-destructive",
+        outline:
+          "border border-muted bg-background text-foreground",
+        secondary:
+          "border border-secondary/50 bg-secondary/20 text-secondary-foreground",
+        success:
+          "border border-success/50 bg-success/20 text-success-foreground",
+        warning:
+          "border border-warning/50 bg-warning/20 text-warning-foreground",
+        info:
+          "border border-info/50 bg-info/20 text-info-foreground",
       },
     },
     defaultVariants: {
@@ -38,10 +57,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-title"
-      className={cn(
-        "col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight",
-        className
-      )}
+      className={cn("font-semibold text-lg mb-1", className)}
       {...props}
     />
   )
@@ -54,10 +70,7 @@ function AlertDescription({
   return (
     <div
       data-slot="alert-description"
-      className={cn(
-        "text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed",
-        className
-      )}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   )

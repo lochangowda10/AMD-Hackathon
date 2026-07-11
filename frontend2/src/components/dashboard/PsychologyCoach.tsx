@@ -1,54 +1,58 @@
-'use client';
+'use client'
 
-import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useTradingStore } from '@/store/trading-store';
+import { useState, useRef, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { useTradingStore } from '@/store/trading-store'
 import {
   Brain, Send, Loader2, User, Bot, Heart, AlertTriangle,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { SkeletonText } from '@/components/ui/skeleton-text'
+import { FormField } from '@/components/ui/form-field'
+import { Label } from '@/components/ui/label'
 
 export function PsychologyCoach() {
-  const { psychologyMessages, addPsychologyMessage, psychologyLoading, setPsychologyLoading } = useTradingStore();
-  const [input, setInput] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { psychologyMessages, addPsychologyMessage, psychologyLoading, setPsychologyLoading } = useTradingStore()
+  const [input, setInput] = useState('')
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [psychologyMessages]);
+  }, [psychologyMessages])
 
   const sendMessage = async () => {
-    if (!input.trim() || psychologyLoading) return;
-    const userMsg = input.trim();
-    setInput('');
+    if (!input.trim() || psychologyLoading) return
+    const userMsg = input.trim()
+    setInput('')
 
     addPsychologyMessage({
       id: `psy_${Date.now()}`,
       role: 'USER',
       content: userMsg,
       timestamp: new Date(),
-    });
+    })
 
-    setPsychologyLoading(true);
+    setPsychologyLoading(true)
     try {
       const res = await fetch('/api/agents/psychology', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg }),
-      });
-      const data = await res.json();
+      })
+      const data = await res.json()
       if (data.success) {
         addPsychologyMessage({
           id: `psy_${Date.now()}_r`,
           role: 'ASSISTANT',
           content: data.response,
           timestamp: new Date(),
-        });
+        })
       }
     } catch (e) {
       addPsychologyMessage({
@@ -56,10 +60,10 @@ export function PsychologyCoach() {
         role: 'ASSISTANT',
         content: 'I am here to help you with your trading psychology. Please try again.',
         timestamp: new Date(),
-      });
+      })
     }
-    setPsychologyLoading(false);
-  };
+    setPsychologyLoading(false)
+  }
 
   const quickPrompts = [
     'I lost ₹20,000 today.',
@@ -67,7 +71,7 @@ export function PsychologyCoach() {
     'Should I enter this trade or am I being greedy?',
     'I keep exiting winning trades too early.',
     'Market is crashing, should I panic sell?',
-  ];
+  ]
 
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)]">
@@ -118,8 +122,7 @@ export function PsychologyCoach() {
               )}>
                 {msg.role === 'USER'
                   ? <User className="w-3.5 h-3.5 text-primary" />
-                  : <Brain className="w-3.5 h-3.5 text-pink-400" />
-                }
+                  : <Brain className="w-3.5 h-3.5 text-pink-400" />}
               </div>
               <div className={cn(
                 'max-w-[80%] p-3 rounded-xl text-xs leading-relaxed',
@@ -150,24 +153,34 @@ export function PsychologyCoach() {
         {/* Input */}
         <div className="p-4 border-t border-border shrink-0">
           <div className="flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder="Share what's on your mind..."
-              className="flex-1 min-h-[40px] max-h-[100px] bg-muted/30 border-border text-xs resize-none"
-              rows={1}
-            />
+            <FormField>
+              <label htmlFor="psychology-input" className="block text-xs text-muted-foreground mb-1">
+                Share what's on your mind...
+              </label>
+              <textarea
+                id="psychology-input"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                placeholder="Share what's on your mind..."
+                className="flex-1 min-h-[40px] max-h-[100px] bg-muted/30 border-border text-xs resize-none"
+                rows={1}
+              />
+            </FormField>
             <Button
               onClick={sendMessage}
               disabled={!input.trim() || psychologyLoading}
-              className="bg-pink-500 hover:bg-pink-600 text-white h-10 w-10 p-0 shrink-0"
+              className="bg-pink-500 hover:bg-pink-600 text-white h-10 w-10 p-0 shrink-0 flex items-center justify-center"
             >
-              {psychologyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {psychologyLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           </div>
         </div>
       </Card>
     </div>
-  );
+  )
 }

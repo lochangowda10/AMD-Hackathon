@@ -1,18 +1,49 @@
 import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
-function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+const textareaVariants = cva(
+  "flex min-h-[8rem] w-full rounded-border border border-background bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-valid disabled:opacity-50 resize-none",
+  {
+    variants: {
+      variant: {
+        default: "border-input bg-background shadow-sm hover:border-primary/30 focus:border-primary focus:ring-primary/20",
+        outline: "border-input bg-background",
+      },
+      size: {
+        default: "min-h-[8rem] px-3 py-2 text-sm",
+        sm: "min-h-[6rem] px-2 text-xs",
+        lg: "min-h-[10rem] px-4 text-lg",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Textarea({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"textarea"> &
+  VariantProps<typeof textareaVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot : "textarea"
+
   return (
-    <textarea
+    <Comp
       data-slot="textarea"
-      className={cn(
-        "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        className
-      )}
-      {...props}
+      className={cn(textareaVariants({ variant, size, className }))}
+      {...props>
     />
   )
 }
 
-export { Textarea }
+export { Textarea, textareaVariants }
