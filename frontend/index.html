@@ -2296,5 +2296,170 @@
         setTimeout(drawSparklines, 100);
     </script>
 
+
+    <!-- BACKEND INTEGRATION SCRIPT -->
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        let authToken = null;
+
+        // 1. Silent Auto-Login
+        async function silentAutoLogin() {
+            try {
+                // Try to login with demo credentials
+                const formData = new URLSearchParams();
+                formData.append('username', 'demo@amd.com');
+                formData.append('password', 'password');
+                
+                let response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                if (response.status === 401 || response.status === 400) {
+                    // Sign up the demo user if they don't exist
+                    await fetch(`${API_BASE_URL}/auth/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            full_name: "Demo User",
+                            email: "demo@amd.com",
+                            password: "password"
+                        })
+                    });
+                    
+                    // Try login again
+                    response = await fetch(`${API_BASE_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    console.log("✅ Auto-Login Successful. Token Acquired.");
+                    
+                    // Fetch data now that we are authenticated
+                    fetchLivePositions();
+                } else {
+                    console.error("❌ Auto-Login Failed.");
+                }
+            } catch (error) {
+                console.error("Backend offline or CORS issue:", error);
+            }
+        }
+
+        // 2. Fetch Live Portfolio
+        async function fetchLivePositions() {
+            if (!authToken) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/portfolio/`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const portfolioData = await response.json();
+                    
+                    // Update the UI if we got data
+                    if (portfolioData && portfolioData.length > 0) {
+                        const listContainer = document.querySelector('.positions-list');
+                        listContainer.innerHTML = ''; // Clear hardcoded data
+                        
+                        portfolioData.forEach((stock, index) => {
+                            const isUp = stock.average_price < stock.current_price; // mock logic if current_price missing
+                            // If backend doesn't return current_price, just simulate a random gain for the hackathon
+                            const gainStr = isUp ? "+3.45%" : "-1.2%"; 
+                            const gainClass = isUp ? "positive" : "negative";
+                            
+                            const rowHTML = `
+                                <div class="position-row">
+                                    <div class="pos-left">
+                                        <span class="pos-ticker">${stock.symbol}</span>
+                                        <span class="pos-desc">${stock.sector || 'Equities'}</span>
+                                    </div>
+                                    <div class="pos-sparkline-box">
+                                        <canvas id="sparkline-api-${index}"></canvas>
+                                    </div>
+                                    <div class="pos-right">
+                                        <span class="pos-price">₹${stock.average_price}</span>
+                                        <span class="pos-gain ${gainClass}">${gainStr}</span>
+                                    </div>
+                                </div>
+                            `;
+                            listContainer.innerHTML += rowHTML;
+                        });
+                        
+                        // Let's just redraw the hardcoded sparklines for visuals
+                        setTimeout(drawSparklines, 500);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch portfolio:", error);
+            }
+        }
+
+        // 3. Override toggleVoiceRecording to hit Backend Chat API
+        window.toggleVoiceRecording = async function() {
+            const btn = document.getElementById('voice-activation-btn');
+            const wave = document.getElementById('voice-wave');
+            const consoleBox = document.getElementById('voice-console');
+            
+            if (wave.classList.contains('wave-pulsing')) {
+                wave.classList.remove('wave-pulsing');
+                btn.innerHTML = '<span>START SPEAKING</span>';
+                lucide.createIcons();
+            } else {
+                wave.classList.add('wave-pulsing');
+                btn.innerHTML = '<span>RECORDING...</span>';
+                consoleBox.innerHTML = '<div class="console-line user-line"><span>[TRADER]:</span><span>Listening...</span></div>';
+                lucide.createIcons();
+                
+                setTimeout(async () => {
+                    const demoQuery = "Can I buy Infosys tomorrow?";
+                    consoleBox.innerHTML += `<div class="console-line user-line"><span>[TRADER]:</span><span>"${demoQuery}"</span></div>`;
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                    
+                    consoleBox.innerHTML += '<div class="console-line"><span>[SYSTEM]:</span><span>Sending to FastAPI Backend...</span></div>';
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                    
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/chat/analyze`, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`
+                            },
+                            body: JSON.stringify({ query: demoQuery })
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            // If backend returns data.response or similar
+                            const aiText = data.response || data.message || "Analysis complete.";
+                            consoleBox.innerHTML += `<div class="console-line ai-line"><span>[AI COPILOT]:</span><span>"${aiText}"</span></div>`;
+                        } else {
+                            consoleBox.innerHTML += `<div class="console-line ai-line" style="color:var(--accent-red)"><span>[ERROR]:</span><span>Backend returned ${response.status}</span></div>`;
+                        }
+                    } catch (error) {
+                        consoleBox.innerHTML += `<div class="console-line ai-line" style="color:var(--accent-red)"><span>[ERROR]:</span><span>Backend Offline.</span></div>`;
+                    }
+                    
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                    wave.classList.remove('wave-pulsing');
+                    btn.innerHTML = '<span>START SPEAKING</span>';
+                    lucide.createIcons();
+                }, 1500);
+            }
+        };
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            silentAutoLogin();
+        });
+    </script>
+
 </body>
 </html>
