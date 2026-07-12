@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getCurrentUserId } from "@/lib/current-user";
 
 // GET - List journal entries
 export async function GET(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = await getCurrentUserId();
 
     const entries = await db.journalEntry.findMany({
       where: {
-        authorId: session.user.id
+        authorId: userId
       },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -38,11 +33,7 @@ export async function GET(req: NextRequest) {
 // POST - Create journal entry
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = await getCurrentUserId();
 
     const { tradeId, entryType, content, mood, followedPlan } = await req.json();
 
@@ -57,7 +48,7 @@ export async function POST(req: NextRequest) {
         content,
         mood: mood || 'CALM',
         followedPlan: followedPlan !== false,
-        authorId: session.user.id,
+        authorId: userId,
       },
     });
 

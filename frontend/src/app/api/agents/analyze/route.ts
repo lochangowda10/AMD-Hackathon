@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runMultiAgentAnalysis } from '@/lib/agents';
 import { db } from '@/lib/db';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentUserId } from '@/lib/current-user';
+
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { query, symbol } = await req.json();
 
     if (!query) {
@@ -20,19 +15,24 @@ export async function POST(req: NextRequest) {
 
     const result = await runMultiAgentAnalysis(query);
 
-    // Save analysis record
-    await db.analysisRecord.create({
-      data: {
-        symbol: symbol || 'UNKNOWN',
-        analysisType: 'MULTI_AGENT',
-        agentResults: JSON.stringify(result.agentResults),
-        finalDecision: result.finalDecision,
-        confidence: result.overallConfidence,
-        reasoning: result.fusionReasoning,
-        inputData: JSON.stringify({ query }),
-        authorId: session.user.id,
-      },
-    });
+    // Save analysis record (uses logged-in user, or the shared demo account) - non-fatal
+    try {
+      const authorId = await getCurrentUserId();
+      await db.analysisRecord.create({
+        data: {
+          symbol: symbol || 'UNKNOWN',
+          analysisType: 'MULTI_AGENT',
+          agentResults: JSON.stringify(result.agentResults),
+          finalDecision: result.finalDecision,
+          confidence: result.overallConfidence,
+          reasoning: result.fusionReasoning,
+          inputData: JSON.stringify({ query }),
+          authorId,
+        },
+      });
+    } catch (dbError) {
+      console.error('Analysis record save failed (non-fatal):', dbError);
+    }
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

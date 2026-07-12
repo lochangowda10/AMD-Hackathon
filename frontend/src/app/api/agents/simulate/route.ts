@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { runMonteCarloSimulation } from '@/lib/agents';
 import { db } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const params = await req.json();
 
     const result = runMonteCarloSimulation({
@@ -22,7 +14,8 @@ export async function POST(req: NextRequest) {
       rewardToRisk: params.rewardToRisk || 2,
     });
 
-    // Save simulation (user-specific)
+    // Save simulation (non-fatal)
+    try {
     await db.simulationResult.create({
       data: {
         capital: params.capital || 50000,
@@ -38,9 +31,11 @@ export async function POST(req: NextRequest) {
         maxDrawdown: result.maxDrawdown,
         riskOfRuin: result.riskOfRuin,
         probabilityDist: JSON.stringify(result.distribution),
-        authorId: session.user.id,
       },
     });
+    } catch (dbError) {
+      console.error('Simulation save failed (non-fatal):', dbError);
+    }
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { runPsychologyCoach } from '@/lib/agents';
 import { db } from '@/lib/db';
+import { getCurrentUserId } from '@/lib/current-user';
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const userId = await getCurrentUserId();
     const { message, sessionId } = await req.json();
 
     if (!message) {
@@ -21,7 +15,7 @@ export async function POST(req: NextRequest) {
     // Get recent trades for context (user-specific)
     const recentTrades = await db.trade.findMany({
       where: {
-        authorId: session.user.id
+        authorId: userId
       },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -39,11 +33,11 @@ export async function POST(req: NextRequest) {
     const response = await runPsychologyCoach(message, tradingHistory);
 
     // Save chat messages (user-specific session)
-    const sid = sessionId || session.user.id;
+    const sid = sessionId || userId;
     await db.chatMessage.createMany({
       data: [
-        { sessionId: sid, role: 'USER', content: message, agentType: 'PSYCHOLOGY', authorId: session.user.id },
-        { sessionId: sid, role: 'ASSISTANT', content: response, agentType: 'PSYCHOLOGY', authorId: session.user.id },
+        { sessionId: sid, role: 'USER', content: message, agentType: 'PSYCHOLOGY', authorId: userId },
+        { sessionId: sid, role: 'ASSISTANT', content: response, agentType: 'PSYCHOLOGY', authorId: userId },
       ],
     });
 

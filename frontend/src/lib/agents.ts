@@ -1,4 +1,4 @@
-import ZAI from 'z-ai-web-dev-sdk';
+import { chatComplete } from '@/lib/ai';
 
 // Agent types
 export type AgentDecision = 'BUY' | 'SELL' | 'WAIT';
@@ -24,15 +24,6 @@ export interface OrchestratorOutput {
     reasons: string[];
     risks: string[];
   };
-}
-
-const zaiCache: { zai: ZAI | null } = { zai: null };
-
-async function getZAI(): Promise<ZAI> {
-  if (!zaiCache.zai) {
-    zaiCache.zai = await ZAI.create();
-  }
-  return zaiCache.zai;
 }
 
 // Individual Agent Prompts
@@ -97,22 +88,16 @@ function parseAgentResponse(response: string, agentName: string): AgentResult {
 }
 
 async function runAgent(agentName: string, prompt: string, userQuery: string): Promise<AgentResult> {
-  const zai = await getZAI();
   const agentPrompt = AGENT_PROMPTS[agentName];
   if (!agentPrompt) {
     return { agent: agentName, decision: 'WAIT', confidence: 0, reasoning: 'Unknown agent', keyFactors: [] };
   }
 
   try {
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: 'assistant', content: agentPrompt },
-        { role: 'user', content: userQuery },
-      ],
-      thinking: { type: 'disabled' },
-    });
-
-    const response = completion.choices[0]?.message?.content || '';
+    const response = await chatComplete([
+      { role: 'system', content: agentPrompt },
+      { role: 'user', content: userQuery },
+    ]);
     return parseAgentResponse(response, agentName);
   } catch (error) {
     return {
@@ -160,20 +145,19 @@ export async function runMultiAgentAnalysis(query: string): Promise<Orchestrator
   const agentResults = await Promise.all(agentPromises);
 
   // Run fusion engine
-  const zai = await getZAI();
   const agentSummary = agentResults.map(r =>
     `${r.agent}: ${r.decision} (${r.confidence}%) - ${r.reasoning}`
   ).join('\n');
 
-  const fusionCompletion = await zai.chat.completions.create({
-    messages: [
-      { role: 'assistant', content: FUSION_PROMPT },
+  let fusionResponse = '';
+  try {
+    fusionResponse = await chatComplete([
+      { role: 'system', content: FUSION_PROMPT },
       { role: 'user', content: `Stock query: ${query}\n\nAgent Results:\n${agentSummary}` },
-    ],
-    thinking: { type: 'disabled' },
-  });
-
-  const fusionResponse = fusionCompletion.choices[0]?.message?.content || '';
+    ]);
+  } catch (e) {
+    console.error('Fusion engine error:', e);
+  }
 
   let fusionParsed: any = {};
   try {
@@ -218,20 +202,16 @@ Be supportive but honest. Use trading psychology principles:
 Always respond in a calming, professional tone. Be specific and actionable.`;
 
 export async function runPsychologyCoach(userMessage: string, tradingHistory?: string): Promise<string> {
-  const zai = await getZAI();
   const context = tradingHistory
     ? `\n\nUser's recent trading context:\n${tradingHistory}`
     : '';
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: 'assistant', content: PSYCHOLOGY_PROMPT },
-      { role: 'user', content: `${userMessage}${context}` },
-    ],
-    thinking: { type: 'disabled' },
-  });
+  const response = await chatComplete([
+    { role: 'system', content: PSYCHOLOGY_PROMPT },
+    { role: 'user', content: `${userMessage}${context}` },
+  ]);
 
-  return completion.choices[0]?.message?.content || 'I am here to help you with your trading psychology. Please share what is on your mind.';
+  return response || 'I am here to help you with your trading psychology. Please share what is on your mind.';
 }
 
 // Trade Simulator (Monte Carlo)
@@ -328,13 +308,11 @@ export function runMonteCarloSimulation(params: {
 
 // Weekly Report Generator
 export async function generateWeeklyReport(trades: any[]): Promise<string> {
-  const zai = await getZAI();
   const tradeSummary = JSON.stringify(trades, null, 2);
 
-  const completion = await zai.chat.completions.create({
-    messages: [
+  const response = await chatComplete([
       {
-        role: 'assistant',
+        role: 'system',
         content: `You are an expert trading analyst generating a weekly performance report.
 Analyze the trades and provide:
 1. Overall performance summary
@@ -346,11 +324,9 @@ Analyze the trades and provide:
 Keep it concise but actionable. Use bullet points.`,
       },
       { role: 'user', content: `Here are this week's trades:\n${tradeSummary}` },
-    ],
-    thinking: { type: 'disabled' },
-  });
+  ]);
 
-  return completion.choices[0]?.message?.content || 'Unable to generate report.';
+  return response || 'Unable to generate report.';
 }
 
 // Market Memory Analysis
@@ -359,22 +335,16 @@ export async function analyzeMarketMemory(symbol: string, pastTrades: any[]): Pr
   suggestion: string;
   commonMistake: string;
 }> {
-  const zai = await getZAI();
-
-  const completion = await zai.chat.completions.create({
-    messages: [
+  const response = await chatComplete([
       {
-        role: 'assistant',
+        role: 'system',
         content: `You are a Market Memory Agent. Analyze a trader's historical trades for a specific symbol.
 Identify patterns in: entry/exit timing, emotional decisions, repeated mistakes, profitable strategies.
 Respond in JSON: { "patterns": ["string"], "suggestion": "string", "commonMistake": "string" }`,
       },
       { role: 'user', content: `Symbol: ${symbol}\nPast trades: ${JSON.stringify(pastTrades)}` },
-    ],
-    thinking: { type: 'disabled' },
-  });
+  ]);
 
-  const response = completion.choices[0]?.message?.content || '';
   try {
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
@@ -387,4 +357,4 @@ Respond in JSON: { "patterns": ["string"], "suggestion": "string", "commonMistak
   };
 }
 
-export { getZAI };
+export { chatComplete };

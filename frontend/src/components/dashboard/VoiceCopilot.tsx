@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useTradingStore } from '@/store/trading-store';
 import {
   Mic, MicOff, Volume2, VolumeX, Send, Loader2, Cpu,
-  AlertTriangle, Info, CheckCircle2, XCircle,
+  AlertTriangle, Info, CheckCircle2, XCircle, Copy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,8 +27,55 @@ export function VoiceCopilot() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const vizCleanupRef = useRef<(() => void) | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
+
+  // Stop any speech / recognition when the component unmounts
+  useEffect(() => {
+    return () => {
+      try { recognitionRef.current?.stop(); } catch { /* noop */ }
+      try { vizCleanupRef.current?.(); } catch { /* noop */ }
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Mic level visualization (modern AnalyserNode + rAF, no deprecated ScriptProcessor)
+  const startVisualization = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioCtx();
+      const analyser = audioContext.createAnalyser();
+      analyser.smoothingTimeConstant = 0.3;
+      analyser.fftSize = 1024;
+      audioContext.createMediaStreamSource(stream).connect(analyser);
+
+      let rafId = 0;
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        setVolumeLevel(sum / data.length / 255);
+        rafId = requestAnimationFrame(tick);
+      };
+      tick();
+
+      vizCleanupRef.current = () => {
+        cancelAnimationFrame(rafId);
+        stream.getTracks().forEach(t => t.stop());
+        audioContext.close().catch(() => { /* noop */ });
+        vizCleanupRef.current = null;
+        setVolumeLevel(0);
+      };
+    } catch {
+      // Visualization is cosmetic - ignore failures
+    }
+  };
 
   // Clear errors/success after timeout
   useEffect(() => {
@@ -42,36 +89,79 @@ export function VoiceCopilot() {
   }, [error, success]);
 
   const startRecording = async () => {
+    setError(null);
+
+    // Primary path: the browser's built-in speech recognition (free, instant,
+    // works on Chrome / Edge / Safari with no server round-trip).
+    const SpeechRecognitionImpl =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (SpeechRecognitionImpl) {
+      try {
+        const recognition = new SpeechRecognitionImpl();
+        recognitionRef.current = recognition;
+        recognition.lang = 'en-IN';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        let finalTranscript = '';
+
+        recognition.onresult = (event: any) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interim += transcript;
+            }
+          }
+          setVoiceInput(finalTranscript || interim);
+        };
+
+        recognition.onerror = (event: any) => {
+          if (event.error === 'no-speech') {
+            setError('No speech detected. Please try again.');
+          } else if (event.error === 'not-allowed') {
+            setError('Microphone access denied. Please allow microphone access.');
+          } else if (event.error !== 'aborted') {
+            setError(`Speech recognition error: ${event.error}`);
+          }
+        };
+
+        recognition.onend = async () => {
+          vizCleanupRef.current?.();
+          setIsRecording(false);
+          setIsListening(false);
+          recognitionRef.current = null;
+
+          const query = finalTranscript.trim();
+          if (query) {
+            setVoiceInput(query);
+            setSuccess('Transcription completed successfully!');
+            await processQuery(query);
+          }
+        };
+
+        recognition.start();
+        startVisualization();
+        setIsRecording(true);
+        setIsListening(true);
+        return;
+      } catch (err: any) {
+        console.error('SpeechRecognition failed, falling back to server ASR:', err);
+      }
+    }
+
+    // Fallback path: record audio and transcribe on the server (Whisper)
     try {
-      setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
-      // Analyze audio for visual feedback
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const microphone = audioContext.createMediaStreamSource(stream);
-      const scriptNode = audioContext.createScriptProcessor(2048, 1, 1);
-
-      analyser.smoothingTimeConstant = 0.3;
-      analyser.fftSize = 1024;
-
-      microphone.connect(analyser);
-      analyser.connect(scriptNode);
-      scriptNode.connect(audioContext.destination);
-
-      scriptNode.onaudioprocess = () => {
-        const array = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(array);
-        let sum = 0;
-        for (let i = 0; i < array.length; i++) {
-          sum += array[i];
-        }
-        const volume = sum / array.length;
-        setVolumeLevel(volume / 255);
-      };
+      startVisualization();
 
       mediaRecorder.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
@@ -79,7 +169,7 @@ export function VoiceCopilot() {
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
-        audioContext.close();
+        vizCleanupRef.current?.();
 
         setProcessing(true);
         setIsListening(false);
@@ -91,23 +181,20 @@ export function VoiceCopilot() {
           formData.append('audio', blob, 'recording.webm');
 
           const res = await fetch('/api/voice/asr', { method: 'POST', body: formData });
+          const data = await res.json().catch(() => null);
 
-          if (!res.ok) {
-            throw new Error(`Transcription failed: ${res.status}`);
-          }
-
-          const data = await res.json();
-
-          if (data.success) {
+          if (data?.success && data.transcription) {
             setVoiceInput(data.transcription);
-            await processQuery(data.transcription);
             setSuccess('Transcription completed successfully!');
+            await processQuery(data.transcription);
+          } else if (data?.fallback === 'browser') {
+            throw new Error('Voice input needs Chrome, Edge or Safari (or a server speech key). Please type your question instead.');
           } else {
-            throw new Error(data.error || 'Transcription failed');
+            throw new Error(data?.error || `Transcription failed: ${res.status}`);
           }
         } catch (e: any) {
           setError(e.message || 'Could not transcribe. Please try again.');
-          setVoiceInput('Error in transcription');
+          setVoiceInput('');
         } finally {
           setProcessing(false);
         }
@@ -123,6 +210,9 @@ export function VoiceCopilot() {
   };
 
   const stopRecording = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* noop */ }
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
@@ -174,21 +264,47 @@ export function VoiceCopilot() {
     }
   }, []);
 
+  const speakWithBrowser = (text: string) => {
+    if (!('speechSynthesis' in window)) {
+      setError('Speech playback is not supported in this browser');
+      setIsSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find(v => v.lang === 'en-IN') ||
+      voices.find(v => v.lang.startsWith('en')) ||
+      null;
+    if (preferred) utterance.voice = preferred;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
   const speakResponse = async () => {
     if (!voiceResponse) return;
 
     setIsSpeaking(true);
     setError(null);
+    const text = voiceResponse.substring(0, 1000);
 
     try {
       const res = await fetch('/api/voice/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: voiceResponse.substring(0, 1000) }),
+        body: JSON.stringify({ text }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Text-to-speech failed: ${res.status}`);
+      const contentType = res.headers.get('content-type') || '';
+
+      // Server has no TTS provider (or it failed) -> use the browser's voice
+      if (!res.ok || contentType.includes('application/json')) {
+        speakWithBrowser(text);
+        return;
       }
 
       const blob = await res.blob();
@@ -202,13 +318,17 @@ export function VoiceCopilot() {
       audioRef.current = new Audio(url);
       audioRef.current.onended = () => {
         setIsSpeaking(false);
-        // Clean up object URL
         URL.revokeObjectURL(url);
       };
-      audioRef.current.play();
-    } catch (e: any) {
-      setError(e.message || 'Text-to-speech failed');
-      setIsSpeaking(false);
+      audioRef.current.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(url);
+        speakWithBrowser(text);
+      };
+      await audioRef.current.play();
+    } catch {
+      // Network or playback issue -> browser voice as last resort
+      speakWithBrowser(text);
     }
   };
 
@@ -433,9 +553,8 @@ export function VoiceCopilot() {
                       <div className="ml-2">
                         <button
                           onClick={() => {
-                            setVoiceInput(msg.content);
-                            // Trigger re-processing
-                            processQuery(msg.content);
+                            setIsSpeaking(true);
+                            speakWithBrowser(msg.content.substring(0, 1000));
                           }}
                           className="text-[10px] hover:text-primary/70 p-1 rounded hover-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                           aria-label="Replay this message"
@@ -512,10 +631,3 @@ export function VoiceCopilot() {
     </div>
   );
 }
-
-// Copy icon (temporary - would normally import from lucide-react)
-const Copy = () => (
-  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6h4m4 8H6a2 2 0 01-2-2V6h4m4 8H6a2 2 0 01-2-2V6h4m4 8H6a2 2 0 01-2-2V6h4" />
-  </svg>
-);

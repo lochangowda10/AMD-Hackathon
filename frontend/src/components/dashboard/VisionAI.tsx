@@ -14,6 +14,98 @@ import { motionVariants } from '@/lib/motion-variants';
 import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+/**
+ * Draws a realistic sample candlestick chart on a canvas so the
+ * "Try Sample" button always produces real image data to analyze.
+ */
+function generateSampleChart(): string {
+  const w = 800;
+  const h = 480;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+
+  // Background
+  ctx.fillStyle = '#0b0f14';
+  ctx.fillRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let y = 40; y < h - 80; y += 45) {
+    ctx.beginPath();
+    ctx.moveTo(50, y);
+    ctx.lineTo(w - 20, y);
+    ctx.stroke();
+  }
+
+  // Title + axis labels
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('NIFTY 50 — Daily', 50, 26);
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  const priceTop = 22600;
+  for (let i = 0; i <= 6; i++) {
+    ctx.fillText(String(priceTop - i * 150), 6, 44 + i * 45);
+  }
+
+  // Deterministic uptrend with a pullback (cup-ish shape)
+  let price = 21800;
+  const candles = 36;
+  const cw = (w - 90) / candles;
+  const toY = (pr: number) => 40 + ((priceTop - pr) / 900) * (h - 130);
+
+  for (let i = 0; i < candles; i++) {
+    const phase = i / candles;
+    const drift = phase < 0.3 ? -14 : phase < 0.55 ? 6 : 22;
+    const noise = Math.sin(i * 2.7) * 28 + Math.cos(i * 1.3) * 18;
+    const open = price;
+    const close = price + drift + noise;
+    const high = Math.max(open, close) + 20 + Math.abs(Math.sin(i * 3.1)) * 25;
+    const low = Math.min(open, close) - 20 - Math.abs(Math.cos(i * 2.2)) * 25;
+    price = close;
+
+    const x = 55 + i * cw + cw / 2;
+    const up = close >= open;
+    ctx.strokeStyle = up ? '#34d399' : '#f87171';
+    ctx.fillStyle = up ? '#34d399' : '#f87171';
+
+    // Wick
+    ctx.beginPath();
+    ctx.moveTo(x, toY(high));
+    ctx.lineTo(x, toY(low));
+    ctx.stroke();
+
+    // Body
+    const bodyTop = toY(Math.max(open, close));
+    const bodyH = Math.max(2, Math.abs(toY(open) - toY(close)));
+    ctx.fillRect(x - cw * 0.3, bodyTop, cw * 0.6, bodyH);
+
+    // Volume bars
+    const vol = 20 + Math.abs(noise) * 0.9 + (phase > 0.55 ? 18 : 0);
+    ctx.fillStyle = up ? 'rgba(52,211,153,0.45)' : 'rgba(248,113,113,0.45)';
+    ctx.fillRect(x - cw * 0.3, h - 25 - vol, cw * 0.6, vol);
+  }
+
+  // Support / resistance lines
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = 'rgba(96,165,250,0.7)';
+  ctx.beginPath();
+  ctx.moveTo(50, toY(21750));
+  ctx.lineTo(w - 20, toY(21750));
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(251,191,36,0.7)';
+  ctx.beginPath();
+  ctx.moveTo(50, toY(22450));
+  ctx.lineTo(w - 20, toY(22450));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  return canvas.toDataURL('image/png');
+}
+
 export function VisionAI() {
   const { visionLoading, setVisionLoading, visionResult, setVisionResult } = useTradingStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -21,6 +113,7 @@ export function VisionAI() {
   const [mimeType, setMimeType] = useState('image/png');
   const [analysisStage, setAnalysisStage] = useState<'idle' | 'uploading' | 'processing' | 'analyzing' | 'complete' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [analysisDetails, setAnalysisDetails] = useState<{
     pattern: string;
     trend: string;
@@ -36,6 +129,17 @@ export function VisionAI() {
     preview: string | null;
     result: string;
   }>>([]);
+
+  // Auto-clear status banners
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
 
   useEffect(() => {
     if (visionLoading && analysisStage !== 'processing') {
@@ -105,18 +209,30 @@ export function VisionAI() {
 
       if (data.success) {
         setVisionResult(data.analysis);
-        // Simulate detailed analysis breakdown
+
+        // Build the breakdown from the model's actual analysis
+        const parsed = data.parsed || null;
+        const supportLevels = (parsed?.support || []).map((sp: any) => `₹${sp.level}`).join(', ');
+        const resistanceLevels = (parsed?.resistance || []).map((r: any) => `₹${r.level}`).join(', ');
         setAnalysisDetails({
-          pattern: 'Cup and Handle Pattern Detected',
-          trend: 'Bullish Continuation Pattern',
-          supportResistance: 'Support at ₹1,845, Resistance at ₹1,920',
-          volume: 'Above Average Volume on Breakout',
-          recommendation: 'Consider long position with stop-loss below support',
-          confidence: 85
+          pattern: parsed?.patterns?.length
+            ? parsed.patterns.map((pt: any) => pt.name).join(', ')
+            : 'No clear pattern detected',
+          trend: parsed?.trend
+            ? `${parsed.trend}${parsed.trendStrength ? ` (${parsed.trendStrength})` : ''}`
+            : 'Trend unclear',
+          supportResistance: supportLevels || resistanceLevels
+            ? `Support: ${supportLevels || 'n/a'} · Resistance: ${resistanceLevels || 'n/a'}`
+            : 'No clear levels identified',
+          volume: parsed?.volumeAnalysis || 'Volume data not visible in chart',
+          recommendation: parsed?.entrySuggestion || 'See full analysis below',
+          confidence: typeof parsed?.confidence === 'number'
+            ? parsed.confidence
+            : (parsed?.patterns?.[0]?.confidence ?? 50),
         });
         setAnalysisStage('complete');
 
-        // Add to history
+        // Add to history (keep last 10)
         setAnalysisHistory(prev => [
           ...prev,
           {
@@ -125,7 +241,7 @@ export function VisionAI() {
             preview: imagePreview,
             result: data.analysis
           }
-        ]).slice(-10); // Keep last 10 analyses
+        ].slice(-10));
 
         setSuccess('Chart analysis completed successfully!');
       } else {
@@ -171,14 +287,11 @@ export function VisionAI() {
       )}
 
       {/* Success Message */}
-      {(() => {
-        const [successMsg] = useState<string | null>(null);
-        return successMsg ? (
-          <Alert variant="success" className="mb-4">
-            <AlertDescription>{successMsg}</AlertDescription>
-          </Alert>
-        ) : null;
-      })()}
+      {success && (
+        <Alert variant="success" className="mb-4">
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Upload Area */}
       <Card className="bg-card border-border">
@@ -190,7 +303,7 @@ export function VisionAI() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
-          <AnimatePresence mode="wait" className="[perspective:600px]">
+          <AnimatePresence mode="wait">
             {!imagePreview ? (
               <motion.div
                 key="upload"
@@ -208,11 +321,17 @@ export function VisionAI() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      // Show sample images for demo
-                      setImagePreview('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=60');
-                      setImageBase64(''); // Would be actual base64 in real implementation
-                      setMimeType('image/jpeg');
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Generate a sample candlestick chart locally so the demo
+                      // always has real image data to analyze
+                      const dataUrl = generateSampleChart();
+                      setImagePreview(dataUrl);
+                      setImageBase64(dataUrl.split(',')[1]);
+                      setMimeType('image/png');
+                      setVisionResult(null);
+                      setAnalysisDetails(null);
+                      setAnalysisStage('uploading');
                     }}
                     className="text-[10px] px-3 py-1"
                   >
@@ -251,7 +370,7 @@ export function VisionAI() {
                     <span className="text-[10px] text-white">Chart uploaded</span>
                   </div>
                   {/* Image analysis visualization */}
-                  {analysisStage === 'processing' || analysisStage === 'analyzing' && (
+                  {(analysisStage === 'processing' || analysisStage === 'analyzing') && (
                     <div className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex flex-col items-center justify-center">
                       <div className="space-y-4">
                         <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
@@ -303,7 +422,7 @@ export function VisionAI() {
       </Card>
 
       {/* Analysis Pipeline */}
-      {visionLoading || analysisStage === 'processing' || analysisStage === 'analyzing' && (
+      {(visionLoading || analysisStage === 'processing' || analysisStage === 'analyzing') && (
         <Card className="bg-card border-border">
           <CardContent className="p-6">
             <div className="space-y-3">
@@ -392,7 +511,7 @@ export function VisionAI() {
                   <p className="text-xs text-muted-foreground mb-1">Confidence Score</p>
                   <div className="flex items-center">
                     <div className="w-10 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className={`h-full bg-${analysisDetails.confidence >= 80 ? 'emerald' : analysisDetails.confidence >= 60 ? 'amber' : 'red'}-400`} style={{ width: `${analysisDetails.confidence}%` }}></div>
+                      <div className={cn('h-full', analysisDetails.confidence >= 80 ? 'bg-emerald-400' : analysisDetails.confidence >= 60 ? 'bg-amber-400' : 'bg-red-400')} style={{ width: `${analysisDetails.confidence}%` }}></div>
                     </div>
                     <span className="ml-2 text-xs font-medium">{analysisDetails.confidence}%</span>
                   </div>

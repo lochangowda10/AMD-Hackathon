@@ -1,59 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { synthesizeSpeech, hasAIProvider } from '@/lib/ai';
+
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, voice = 'tongtong', speed = 1.0 } = await req.json();
+    const { text, voice, speed = 1.0 } = await req.json();
 
     if (!text) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     }
 
-    // Split text into chunks if needed (max 1024 chars)
-    const chunks: string[] = [];
+    // Keep it responsive: speak the first ~1000 characters
     const maxLen = 1000;
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    let current = '';
-
+    const sentences: string[] = text.match(/[^.!?]+[.!?]+/g) || [text];
+    let chunkToSpeak = '';
     for (const sentence of sentences) {
-      if ((current + sentence).length <= maxLen) {
-        current += sentence;
-      } else {
-        if (current) chunks.push(current.trim());
-        current = sentence;
-      }
+      if ((chunkToSpeak + sentence).length > maxLen) break;
+      chunkToSpeak += sentence;
     }
-    if (current) chunks.push(current.trim());
+    if (!chunkToSpeak) chunkToSpeak = text.substring(0, maxLen);
 
-    // Use first chunk for TTS (for real-time responsiveness)
-    const chunkToSpeak = chunks[0] || text.substring(0, 1000);
+    if (!hasAIProvider()) {
+      return NextResponse.json({ success: false, fallback: 'browser' }, { status: 200 });
+    }
 
-    const ZAI = (await import('z-ai-web-dev-sdk')).default;
-    const zai = await ZAI.create();
+    const result = await synthesizeSpeech(chunkToSpeak.trim(), { voice, speed });
 
-    const response = await zai.audio.tts.create({
-      input: chunkToSpeak,
-      voice,
-      speed: Math.max(0.5, Math.min(2.0, speed)),
-      response_format: 'wav',
-      stream: false,
-    });
+    if (!result) {
+      // Provider (e.g. Fireworks) has no TTS - browser speechSynthesis takes over
+      return NextResponse.json({ success: false, fallback: 'browser' }, { status: 200 });
+    }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(new Uint8Array(arrayBuffer));
-
-    return new NextResponse(buffer, {
+    return new NextResponse(Buffer.from(result.audio), {
       status: 200,
       headers: {
-        'Content-Type': 'audio/wav',
-        'Content-Length': buffer.length.toString(),
+        'Content-Type': result.contentType,
         'Cache-Control': 'no-cache',
       },
     });
   } catch (error) {
     console.error('TTS error:', error);
+    // Never hard-fail voice output - the client falls back to browser TTS
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'TTS generation failed' },
-      { status: 500 }
+      {
+        success: false,
+        fallback: 'browser',
+        error: error instanceof Error ? error.message : 'TTS generation failed',
+      },
+      { status: 200 }
     );
   }
 }

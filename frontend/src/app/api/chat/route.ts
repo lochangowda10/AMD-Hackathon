@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getZAI } from '@/lib/agents';
+import { chatComplete, ChatMessageInput } from '@/lib/ai';
 import { db } from '@/lib/db';
+import { getCurrentUserId } from '@/lib/current-user';
+
+export const maxDuration = 60;
 
 const COPILOT_SYSTEM = `You are an AI Swing Trading Copilot - an institutional-grade AI research team running locally.
 You help Indian retail traders make informed decisions about swing trading.
@@ -32,43 +35,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Get conversation history
-    const history = await db.chatMessage.findMany({
-      where: { sessionId },
-      orderBy: { createdAt: 'asc' },
-      take: 20,
-    });
+    // Get conversation history (non-fatal if the DB is unreachable)
+    let history: { role: string; content: string }[] = [];
+    try {
+      history = await db.chatMessage.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: 'asc' },
+        take: 20,
+      });
+    } catch (dbError) {
+      console.error('Chat history load failed (non-fatal):', dbError);
+    }
 
-    const zai = await getZAI();
+    const messages: ChatMessageInput[] = [{ role: 'system', content: COPILOT_SYSTEM }];
 
-    const messages: { role: string; content: string }[] = [
-      { role: 'assistant', content: COPILOT_SYSTEM },
-    ];
-
-    // Add history
     for (const msg of history) {
       if (msg.role === 'USER' || msg.role === 'ASSISTANT') {
-        messages.push({ role: msg.role === 'ASSISTANT' ? 'assistant' : 'user', content: msg.content });
+        messages.push({
+          role: msg.role === 'ASSISTANT' ? 'assistant' : 'user',
+          content: msg.content,
+        });
       }
     }
 
-    // Add current message
     messages.push({ role: 'user', content: message });
 
-    const completion = await zai.chat.completions.create({
-      messages: messages as any,
-      thinking: { type: 'disabled' },
-    });
+    const response =
+      (await chatComplete(messages)) ||
+      'I am your AI Trading Copilot. How can I help you today?';
 
-    const response = completion.choices[0]?.message?.content || 'I am your AI Trading Copilot. How can I help you today?';
-
-    // Save messages
-    await db.chatMessage.createMany({
-      data: [
-        { sessionId, role: 'USER', content: message, agentType: 'COPILOT' },
-        { sessionId, role: 'ASSISTANT', content: response, agentType: 'COPILOT' },
-      ],
-    });
+    // Save messages (non-fatal)
+    try {
+      const authorId = await getCurrentUserId();
+      await db.chatMessage.createMany({
+        data: [
+          { sessionId, role: 'USER', content: message, agentType: 'COPILOT', authorId },
+          { sessionId, role: 'ASSISTANT', content: response, agentType: 'COPILOT', authorId },
+        ],
+      });
+    } catch (dbError) {
+      console.error('Chat save failed (non-fatal):', dbError);
+    }
 
     return NextResponse.json({ success: true, response });
   } catch (error) {

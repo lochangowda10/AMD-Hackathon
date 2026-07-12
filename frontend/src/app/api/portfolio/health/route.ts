@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getZAI } from '@/lib/agents';
+import { chatComplete } from '@/lib/ai';
 
 export async function GET() {
   try {
@@ -27,7 +27,6 @@ export async function GET() {
     const cashAllocation = Math.max(0, 30 - holdings.length * 5); // Simulated
 
     // Generate AI health analysis
-    const zai = await getZAI();
     const portfolioContext = JSON.stringify({
       holdings: holdings.length,
       totalInvested,
@@ -38,10 +37,11 @@ export async function GET() {
       cashAllocation,
     });
 
-    const healthCompletion = await zai.chat.completions.create({
-      messages: [
+    let healthContent = '';
+    try {
+      healthContent = await chatComplete([
         {
-          role: 'assistant',
+          role: 'system',
           content: `You are a Portfolio Health Analyst. Given portfolio data, provide:
 1. Diversification score (0-100)
 2. Risk assessment
@@ -50,11 +50,10 @@ export async function GET() {
 Respond in JSON: { "diversificationScore": 0-100, "riskLevel": "LOW"|"MEDIUM"|"HIGH", "suggestions": ["string"], "correlationConcerns": ["string"], "overallHealth": "EXCELLENT"|"GOOD"|"FAIR"|"POOR" }`,
         },
         { role: 'user', content: portfolioContext },
-      ],
-      thinking: { type: 'disabled' },
-    });
-
-    const healthContent = healthCompletion.choices[0]?.message?.content || '';
+      ]);
+    } catch (aiError) {
+      console.error('Portfolio health AI analysis failed (using defaults):', aiError);
+    }
     let healthAnalysis: any = {
       diversificationScore: 50,
       riskLevel: 'MEDIUM',

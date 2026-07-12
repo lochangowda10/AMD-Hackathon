@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getCurrentUserId } from '@/lib/current-user';
 
 // GET - List trades
 export async function GET() {
@@ -19,8 +20,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const authorId = await getCurrentUserId();
     const trade = await db.trade.create({
       data: {
+        authorId,
         symbol: body.symbol || 'NIFTY',
         direction: body.direction || 'WAIT',
         entryPrice: body.entryPrice || 0,
