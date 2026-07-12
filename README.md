@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🚀 Mind-Hackers: AI Swing Trading Copilot</h1>
+  <h1>🚀 NAVIA: AI Swing Trading Copilot</h1>
   <p><b>Institutional-Grade AI Intelligence for the Everyday Swing Trader</b></p>
   <p><i>Built for the AMD Developer Hackathon</i></p>
 </div>
@@ -91,7 +91,7 @@ Navigate to `http://localhost:3000` to access the dashboard.
 
 ---
 
-## 👥 The "Mind-Hackers" Team
+## 👥 Team NAVIA
 - **Hanamaraddi Kanakannavar** - AI Orchestration & Backend Architecture
 - **Lochan Gowda T M** - 3D Interface Design & Frontend Engineering
 - **Govardhana B R** - UX Architecture & Full-Stack Integration
