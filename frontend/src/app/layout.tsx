@@ -17,9 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Swing Trading Copilot — Agentic AI Financial Decision Assistant",
   description: "Your AI-powered institutional research team. Multi-agent analysis, voice copilot, vision AI for charts, trade simulation, and explainable AI recommendations for Indian stock markets.",
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
 };
 
 export default function RootLayout({

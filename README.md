@@ -2,8 +2,6 @@
   <h1>🚀 NAVIA: AI Swing Trading Copilot</h1>
   <p><b>Institutional-Grade AI Intelligence for the Everyday Swing Trader</b></p>
   <p><i>Built for the AMD Developer Hackathon</i></p>
-
-  <img src="https://z-cdn.chatglm.cn/z-ai/static/logo.svg" alt="Navia Logo" width="100"/>
 </div>
 
 <br/>
