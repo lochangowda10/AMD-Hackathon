@@ -4,7 +4,14 @@ import { getToken } from "next-auth/jwt";
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  let token = null;
+  try {
+    const secret = process.env.NEXTAUTH_SECRET || "fallback-secret-to-prevent-crashes-123456789012345678901234567890";
+    token = await getToken({ req: request, secret: secret });
+  } catch (error) {
+    console.error("Middleware getToken error:", error);
+  }
+  
   const url = request.nextUrl;
 
   // Define protected routes
