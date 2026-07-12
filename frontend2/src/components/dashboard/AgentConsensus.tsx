@@ -64,8 +64,8 @@ function AgentCard({ result, index }: { result: AgentResult | null; index: numbe
     return (
       <motion.div
         variants={motionVariants.cardHover}
-        initial="hover"
-        animate="hover"
+        whileHover="hover"
+        whileTap="tap"
         className="p-3 rounded-lg bg-muted/20 border border-border/50"
       >
         <div className="flex items-center justify-between mb-2">
@@ -251,7 +251,7 @@ export function AgentConsensus() {
                 <CardTitle className="text-sm font-semibold">Individual Agent Analysis</CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="[perspective:600px] grid grid-cols-1 md:grid-cols-2 gap-3">
                   {analysisResult.agentResults.map((agent, i) => (
                     <AgentCard key={agent.agent} result={agent} index={i} />
                   ))}

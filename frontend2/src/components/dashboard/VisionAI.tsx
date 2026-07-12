@@ -190,15 +190,13 @@ export function VisionAI() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" className="[perspective:600px]">
             {!imagePreview ? (
               <motion.div
                 key="upload"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                whileHover={{ scale: 1.05, rotateY: 5 }}
-                whileTap={{ scale: 0.95, rotateY: 2 }}
+                variants={motionVariants.pop3d}
+                whileHover="hover"
+                whileTap="tap"
                 className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/40 transition-colors cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -235,8 +233,9 @@ export function VisionAI() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                whileHover={{ scale: 1.02, rotateY: 3 }}
-                whileTap={{ scale: 0.98 }}
+                variants={motionVariants.tilt}
+                whileHover="hover"
+                whileTap="tap"
                 className="relative rounded-xl overflow-hidden border border-border"
               >
                 <div className="relative rounded-xl overflow-hidden border border-border">
@@ -266,25 +265,29 @@ export function VisionAI() {
                   )}
                 </div>
                 <div className="flex justify-center mt-4">
-                  <Button
-                    onClick={handleAnalyze}
-                    disabled={visionLoading || analysisStage === 'processing' || analysisStage === 'analyzing'}
-                    className="bg-violet-500 hover:bg-violet-600 text-white px-8 py-2"
-                    whileHover={{ scale: 1.05, rotateY: 5 }}
-                    whileTap={{ scale: 0.95, rotateY: 2 }}
+                  <motion.div
+                    variants={motionVariants.pop3d}
+                    whileHover="hover"
+                    whileTap="tap"
                   >
-                    {visionLoading || analysisStage === 'processing' || analysisStage === 'analyzing' ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing Chart...
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Analyze with Vision AI
-                      </>
-                    )}
-                  </Button>
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={visionLoading || analysisStage === 'processing' || analysisStage === 'analyzing'}
+                      className="bg-violet-500 hover:bg-violet-600 text-white px-8 py-2"
+                    >
+                      {visionLoading || analysisStage === 'processing' || analysisStage === 'analyzing' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Analyzing Chart...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Analyze with Vision AI
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
                   <Button
                     onClick={downloadResult}
                     disabled={!visionResult}
@@ -314,9 +317,25 @@ export function VisionAI() {
               ].map((step, i) => (
                 <motion.div
                   key={step.label}
-                  initial={{ opacity: 0, x: -10, scale: 0.9, rotateY: 10 }}
-                  animate={{ opacity: (analysisStage === step.stage || (analysisStage === 'analyzing' && i >= 2) || (analysisStage === 'complete')) ? 1 : 0, x: 0, scale: 1, rotateY: 0 }}
-                  transition={{ delay: i * 0.2, duration: 0.5, type: "spring", stiffness: 300, damping: 20 }}
+                  initial={{
+                    opacity: 0,
+                    x: -10,
+                    scale: 0.9,
+                    rotateY: motionVariants.flipY.hidden.rotateY
+                  }}
+                  animate={{
+                    opacity: (analysisStage === step.stage || (analysisStage === 'analyzing' && i >= 2) || (analysisStage === 'complete')) ? 1 : 0,
+                    x: 0,
+                    scale: 1,
+                    rotateY: motionVariants.flipY.visible.rotateY
+                  }}
+                  transition={{
+                    delay: i * 0.2,
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20
+                  }}
                   className="flex items-center gap-3"
                 >
                   <div className="w-8 h-8 rounded-lg bg-violet-400/10 flex items-center justify-center">

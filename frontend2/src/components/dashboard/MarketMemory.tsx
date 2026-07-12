@@ -88,109 +88,181 @@ export function MarketMemory() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
           {/* Stats Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <History className="w-5 h-5 text-primary mx-auto mb-1" />
-                <p className="text-2xl font-bold">{memory.tradeCount}</p>
-                <p className="text-[10px] text-muted-foreground">Total Trades</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <Award className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-                <p className="text-2xl font-bold text-emerald-400">{memory.winRate}%</p>
-                <p className="text-[10px] text-muted-foreground">Win Rate</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="w-5 h-5 text-cyan-400 mx-auto mb-1" />
-                <p className="text-2xl font-bold">{memory.avgHoldingDays || '—'}</p>
-                <p className="text-[10px] text-muted-foreground">Avg Holding Days</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="w-5 h-5 text-amber-400 mx-auto mb-1" />
-                <p className="text-2xl font-bold">{memory.avgGain ? `${memory.avgGain}%` : '—'}</p>
-                <p className="text-[10px] text-muted-foreground">Avg Gain</p>
-              </CardContent>
-            </Card>
+            <motion.div
+              key="stat1"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <History className="w-5 h-5 text-primary mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{memory.tradeCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Total Trades</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              key="stat2"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <Award className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
+                  <p className="text-2xl font-bold text-emerald-400">{memory.winRate}%</p>
+                  <p className="text-[10px] text-muted-foreground">Win Rate</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              key="stat3"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="w-5 h-5 text-cyan-400 mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{memory.avgHoldingDays || '—'}</p>
+                  <p className="text-[10px] text-muted-foreground">Avg Holding Days</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              key="stat4"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{memory.avgGain ? `${memory.avgGain}%` : '—'}</p>
+                  <p className="text-[10px] text-muted-foreground">Avg Gain</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Insights */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-2 pt-3 px-4">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-400" /> Common Mistake
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <p className="text-xs text-foreground leading-relaxed">{memory.commonMistake || 'Not enough data to identify patterns'}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-2 pt-3 px-4">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-amber-400" /> AI Suggestion
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <p className="text-xs text-foreground leading-relaxed">{memory.suggestion || 'Continue trading to build pattern recognition'}</p>
-              </CardContent>
-            </Card>
+            <motion.div
+              key="insight1"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400" /> Common Mistake
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-xs text-foreground leading-relaxed">{memory.commonMistake || 'Not enough data to identify patterns'}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div
+              key="insight2"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-amber-400" /> AI Suggestion
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-xs text-foreground leading-relaxed">{memory.suggestion || 'Continue trading to build pattern recognition'}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Detected Patterns */}
           {memory.patterns && memory.patterns.length > 0 && (
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-2 pt-3 px-4">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Database className="w-4 h-4 text-primary" /> Detected Patterns
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <div className="space-y-2">
-                  {memory.patterns.map((p, i) => (
-                    <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-muted/20">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                      <p className="text-xs text-foreground">{p}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div
+              key="patterns"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Database className="w-4 h-4 text-primary" /> Detected Patterns
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <div className="space-y-2">
+                    {memory.patterns.map((p, i) => (
+                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-muted/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                        <p className="text-xs text-foreground">{p}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
           {/* Recent Trades */}
           {memory.recentTrades && memory.recentTrades.length > 0 && (
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-2 pt-3 px-4">
-                <CardTitle className="text-sm font-semibold">Recent Trades</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <div className="space-y-2">
-                  {memory.recentTrades.map((t: any) => (
-                    <div key={t.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn(
-                          'text-[10px]',
-                          t.direction === 'BUY' && 'border-emerald-400/40 text-emerald-400',
-                          t.direction === 'SELL' && 'border-red-400/40 text-red-400',
-                        )}>{t.direction}</Badge>
-                        <span className="text-xs">₹{t.entryPrice}</span>
+            <motion.div
+              key="trades"
+              variants={motionVariants.pop3d}
+              whileHover="hover"
+              whileTap="tap"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card className="bg-card border-border">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-semibold">Recent Trades</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <div className="space-y-2">
+                    {memory.recentTrades.map((t: any) => (
+                      <div key={t.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={cn(
+                            'text-[10px]',
+                            t.direction === 'BUY' && 'border-emerald-400/40 text-emerald-400',
+                            t.direction === 'SELL' && 'border-red-400/40 text-red-400',
+                          )}>{t.direction}</Badge>
+                          <span className="text-xs">₹{t.entryPrice}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className={cn('text-xs', (t.pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+                            {t.status === 'CLOSED' ? `₹${t.pnl}` : 'Open'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className={cn('text-xs', (t.pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400')}>
-                          {t.status === 'CLOSED' ? `₹${t.pnl}` : 'Open'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
         </motion.div>
       ) : (

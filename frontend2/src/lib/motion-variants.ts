@@ -118,12 +118,12 @@ export const motionVariants = {
 
   // 3D Tilt effect (NEW)
   tilt: {
-    whileHover: {
+    hover: {
       rotateX: 10,
       rotateY: -10,
       scale: 1.02
     },
-    whileTap: {
+    tap: {
       rotateX: 5,
       rotateY: -5,
       scale: 0.98
@@ -137,11 +137,11 @@ export const motionVariants = {
 
   // 3D Pop effect (NEW)
   pop3d: {
-    whileHover: {
+    hover: {
       scale: 1.05,
       rotateY: 5
     },
-    whileTap: {
+    tap: {
       scale: 0.95,
       rotateY: 2
     },
@@ -165,26 +165,29 @@ export const motionVariants = {
 
   // Hover variants
   hoverScale: {
-    whileHover: { scale: 1.05 },
-    whileTap: { scale: 0.95 },
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 },
     transition: { type: "spring", stiffness: 300, damping: 30 }
   },
 
   hoverLift: {
-    whileHover: { y: -2 },
-    whileTap: { y: 0 },
+    hover: { y: -2 },
+    tap: { y: 0 },
     transition: { type: "spring", stiffness: 300, damping: 30 }
   },
 
   // Pulse variants
   pulse: {
-    whileHover: { scale: [1, 1.05, 1] },
-    transition: { repeat: Infinity, duration: 2 }
+    hidden: { scale: 1 },
+    visible: { 
+      scale: [1, 1.05, 1],
+      transition: { repeat: Infinity, duration: 2 }
+    }
   },
 
   // 3D Pulse (NEW)
   pulse3d: {
-    whileHover: {
+    hover: {
       scale: [1, 1.07, 1],
       rotateY: [0, 5, 0]
     },
@@ -220,13 +223,13 @@ export const motionVariants = {
 
   // Card hover 3D effect (NEW)
   cardHover: {
-    whileHover: {
+    hover: {
       rotateY: 8,
       rotateX: -5,
       scale: 1.02,
       boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
     },
-    whileTap: {
+    tap: {
       scale: 0.98
     },
     transition: {
