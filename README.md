@@ -4,13 +4,10 @@ AI Swing Trading Copilot
 
 ## Project Structure
 
-backend/
-frontend/
+- `backend/`: FastAPI + Python Backend
+- `frontend/`: Next.js 16 + React + Tailwind CSS + Framer Motion Frontend
 
-Backend: Python + FastAPI
-Frontend: React
-
-Team Members:
+## Team Members
 - Backend: Hanamaraddi Kanakannavar
 - Frontend: Lochan Gowda T M 
 - Frontend: Govardhana B R
