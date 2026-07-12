@@ -1,34 +1,62 @@
-# 📈 AI Swing Trading Copilot
+<div align="center">
+  <h1>🚀 Mind-Hackers: AI Swing Trading Copilot</h1>
+  <p><b>Institutional-Grade AI Intelligence for the Everyday Swing Trader</b></p>
+  <p><i>Built for the AMD Developer Hackathon</i></p>
+</div>
 
-An advanced, multi-agent AI-powered platform designed to assist swing traders in making data-driven, emotion-free trading decisions. The Copilot combines real-time market data, technical chart analysis, and psychological coaching to provide a comprehensive and immersive trading workspace.
+<br/>
 
-## ✨ Key Features
+## 🌟 The Problem
+Retail swing traders face three massive hurdles:
+1. **Information Overload & Speed**: Processing news, technicals, and fundamentals simultaneously is nearly impossible for a human.
+2. **Emotional Bias**: Fear and Greed drive 80% of retail trading losses.
+3. **Lack of Institutional Tools**: Retail traders lack access to the quantitative, multi-agent modeling systems used by top hedge funds.
 
-- **🤖 Multi-Agent Consensus**: A system of specialized AI agents working together to analyze market trends, calculate risks, and identify optimal entry/exit points.
-- **👁️ Vision AI**: Upload trading charts for instant, automated pattern recognition and technical analysis.
-- **🎙️ Voice Copilot**: Interact with the platform hands-free using voice commands to query market data, execute simulated trades, or log journal entries.
-- **🧠 Psychology Coach**: Get real-time feedback on your trading mindset to prevent emotional, impulsive, or revenge trading.
-- **📊 Portfolio & Market Memory**: Track your holdings, monitor portfolio health, and review historical trades to continuously learn from past performance.
-- **🕹️ Trade Simulator**: Run "What-If" scenarios to backtest your strategies and calculate potential PnL before risking real capital.
+## 💡 Our Solution
+**AI Swing Trading Copilot** levels the playing field. We have engineered a hyper-intelligent, multi-agent ecosystem that acts as your personal quantitative team. Instead of relying on a single LLM, our platform deploys a **Consensus Architecture** where specialized AI agents debate and synthesize market data, ensuring high-conviction, mathematically-backed trading decisions.
 
-## 🛠️ Technology Stack
+---
 
-### Frontend
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
-- **UI Library**: [React](https://react.org/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/) for 3D and physics-based interactions
-- **Components**: Shadcn UI & Radix UI primitives
+## 🔥 Groundbreaking Features
 
-### Backend
-- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python)
-- **AI Integration**: Custom Agentic workflows and multi-agent coordination
+### 🤖 Multi-Agent Consensus Engine
+We don't rely on a single prompt. Our backend coordinates multiple specialized AI agents:
+- **Technical Analyst Agent**: Crunches RSI, MACD, and moving averages.
+- **Fundamental Analyst Agent**: Parses macroeconomic data and company financials.
+- **Risk Management Agent**: Enforces strict stop-loss and position sizing rules.
+*The final trade signal is generated only when the agents reach a mathematical consensus, eliminating hallucinations and bias.*
 
-## 🚀 Getting Started
+### 👁️ Vision AI (Chart Pattern Recognition)
+Upload any candlestick chart. Our Vision AI instantly runs a pixel-by-pixel analysis to detect support/resistance zones, harmonic patterns, and breakout structures that the human eye might miss. 
 
-### Prerequisites
-- Node.js (v18+)
-- Python (3.9+)
+### 🎙️ Voice Copilot
+Trading requires speed. Interact with your portfolio entirely hands-free. Using advanced speech-to-text (ASR) and text-to-speech (TTS), you can query market memory, request portfolio health checks, or simulate trades simply by speaking to the Copilot.
+
+### 🧠 Real-Time Psychology Coach
+The Copilot monitors your trading frequency, win/loss streaks, and journal entries to detect emotional tilt. If you try to revenge-trade after a loss, the Psychology Agent intervenes with behavioral coaching to protect your capital.
+
+### 🕹️ "What-If" Trade Simulator
+Never risk real capital blindly. Input a hypothetical trade, and our multi-agent system will backtest the parameters against historical market memory and current volatility to calculate probability of success and expected PnL.
+
+---
+
+## 🏗️ System Architecture & Tech Stack
+
+Our platform is engineered for speed, responsiveness, and scale.
+
+### 💻 Frontend (Immersive UI/UX)
+- **Framework**: Next.js 16 (App Router)
+- **UI/Styling**: React, Tailwind CSS v4, Shadcn UI
+- **Animations**: Framer Motion (Implementing 3D spatial UI, physics-based spring interactions, and dynamic depth via perspective mapping)
+
+### ⚙️ Backend (High-Performance Engine)
+- **Framework**: FastAPI (Python)
+- **AI Orchestration**: Custom Python Agentic workflow pipelines
+- **Database**: SQLite with Prisma ORM for lightning-fast local query execution
+
+---
+
+## 🚀 Installation & Setup
 
 ### 1. Clone the Repository
 ```bash
@@ -36,28 +64,34 @@ git clone https://github.com/lochangowda10/AMD-Hackathon.git
 cd AMD-Hackathon
 ```
 
-### 2. Setup Backend (FastAPI)
+### 2. Backend Setup (FastAPI)
 ```bash
 cd backend
 python -m venv venv
-# On Windows: venv\Scripts\activate
-# On Mac/Linux: source venv/bin/activate
+# Windows: venv\Scripts\activate | Mac/Linux: source venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
-### 3. Setup Frontend (Next.js)
-Open a new terminal window:
+### 3. Frontend Setup (Next.js)
+Open a new terminal:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+Navigate to `http://localhost:3000` to access the dashboard.
 
-The application will be available at `http://localhost:3000`.
+---
 
-## 👥 Team Members
+## 🔮 Future Roadmap
+- **Live Broker Integration**: Direct execution via Alpaca or Interactive Brokers API.
+- **AMD Hardware Acceleration**: Optimizing local LLM inference using AMD ROCm for zero-latency, on-device agent execution.
+- **Social Sentiment Agent**: Real-time Twitter/Reddit NLP sentiment scraping.
 
-- **Hanamaraddi Kanakannavar** (Backend)
-- **Lochan Gowda T M** (Frontend)
-- **Govardhana B R** (Frontend)
+---
+
+## 👥 The "Mind-Hackers" Team
+- **Hanamaraddi Kanakannavar** - AI Orchestration & Backend Architecture
+- **Lochan Gowda T M** - 3D Interface Design & Frontend Engineering
+- **Govardhana B R** - UX Architecture & Full-Stack Integration
