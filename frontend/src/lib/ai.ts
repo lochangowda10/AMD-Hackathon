@@ -54,9 +54,16 @@ export function getProvider(): ProviderConfig {
       name: 'fireworks',
       baseUrl: 'https://api.fireworks.ai/inference/v1',
       apiKey: process.env.FIREWORKS_API_KEY,
-      chatModel: process.env.AI_MODEL || 'accounts/fireworks/models/llama4-maverick-instruct-basic',
-      // Llama 4 Maverick is multimodal on Fireworks - handles vision too
-      visionModel: process.env.AI_VISION_MODEL || 'accounts/fireworks/models/llama4-maverick-instruct-basic',
+      // Fireworks periodically retires serverless model deployments (e.g. the
+      // former default llama4-maverick-instruct-basic returns 404 now).
+      // gpt-oss-120b cleanly separates its reasoning into `reasoning_content`
+      // and returns a clean `content` for structured JSON - Kimi K2 does not
+      // (it writes its chain-of-thought into `content` itself on complex
+      // schemas, so it needs a larger token budget - see visionComplete).
+      // Kimi K2 is used for vision only because it's the one deployed model
+      // on this account that accepts image input.
+      chatModel: process.env.AI_MODEL || 'accounts/fireworks/models/gpt-oss-120b',
+      visionModel: process.env.AI_VISION_MODEL || 'accounts/fireworks/models/kimi-k2p6',
       asrModel: 'whisper-v3',
       asrUrl: 'https://audio-prod.us-virginia-1.direct.fireworks.ai/v1/audio/transcriptions',
       ttsModel: null,
@@ -111,7 +118,7 @@ export function hasAIProvider(): boolean {
  */
 export async function chatComplete(
   messages: ChatMessageInput[],
-  options: { model?: string; temperature?: number; maxTokens?: number } = {}
+  options: { model?: string; temperature?: number; maxTokens?: number; timeoutMs?: number } = {}
 ): Promise<string> {
   const provider = getProvider();
 
@@ -127,6 +134,7 @@ export async function chatComplete(
       temperature: options.temperature ?? 0.4,
       max_tokens: options.maxTokens ?? 2048,
     }),
+    signal: AbortSignal.timeout(options.timeoutMs ?? 45_000),
   });
 
   if (!res.ok) {
@@ -162,8 +170,18 @@ export async function visionComplete(prompt: string, imageDataUrl: string): Prom
         },
       ],
       temperature: 0.2,
-      max_tokens: 2048,
+      // Some vision models (e.g. Kimi K2 on Fireworks) write their
+      // chain-of-thought directly into `content` on complex JSON schemas
+      // instead of the separate `reasoning_content` field, so they need a
+      // larger budget to reach the actual answer - 2048 was cutting them off
+      // mid-thought before any JSON appeared.
+      max_tokens: 4096,
     }),
+    // Kept comfortably under the vision route's 60s maxDuration so a slow
+    // model response still leaves time to fall back to the pixel engine and
+    // return a real answer, instead of the whole request being killed by the
+    // platform's hard timeout.
+    signal: AbortSignal.timeout(42_000),
   });
 
   if (!res.ok) {
@@ -195,6 +213,7 @@ export async function transcribeAudio(audio: Blob, filename = 'recording.webm'):
     method: 'POST',
     headers: { Authorization: `Bearer ${provider.apiKey}` },
     body: form,
+    signal: AbortSignal.timeout(50_000),
   });
 
   if (!res.ok) {
@@ -231,6 +250,7 @@ export async function synthesizeSpeech(
       speed: Math.max(0.5, Math.min(2.0, options.speed ?? 1.0)),
       response_format: provider.name === 'groq' ? 'wav' : 'mp3',
     }),
+    signal: AbortSignal.timeout(50_000),
   });
 
   if (!res.ok) {

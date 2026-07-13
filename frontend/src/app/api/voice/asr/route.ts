@@ -46,14 +46,18 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, transcription });
   } catch (error) {
-    console.error('ASR error:', error);
+    console.error('ASR error (falling back to browser speech recognition):', error);
+    // Status 200: the client already has a defined, non-error fallback path
+    // for this shape (switch to the browser's Web Speech API) - returning
+    // 500 here would surface a real transcription hiccup as a server error
+    // in monitoring even though the request was handled gracefully.
     return NextResponse.json(
       {
         success: false,
         fallback: 'browser',
         error: error instanceof Error ? error.message : 'Speech recognition failed',
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
